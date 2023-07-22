@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CustomerRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -22,6 +24,7 @@ class Customer implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank]
     private array $roles = ['ROLE_VISITOR'];
 
     /**
@@ -42,6 +45,14 @@ class Customer implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Assert\GreaterThanOrEqual(1)] 
     private ?int $nbGuests = 1;
+
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: Booking::class, orphanRemoval: true)]
+    private Collection $Booking;
+
+    public function __construct()
+    {
+        $this->Booking = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -143,6 +154,36 @@ class Customer implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNbGuests(int $nbGuests): static
     {
         $this->nbGuests = $nbGuests;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Booking>
+     */
+    public function getBooking(): Collection
+    {
+        return $this->Booking;
+    }
+
+    public function addBooking(Booking $booking): static
+    {
+        if (!$this->Booking->contains($booking)) {
+            $this->Booking->add($booking);
+            $booking->setCustomer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): static
+    {
+        if ($this->Booking->removeElement($booking)) {
+            // set the owning side to null (unless already changed)
+            if ($booking->getCustomer() === $this) {
+                $booking->setCustomer(null);
+            }
+        }
 
         return $this;
     }
