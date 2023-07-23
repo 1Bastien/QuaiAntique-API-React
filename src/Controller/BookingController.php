@@ -2,16 +2,19 @@
 
 namespace App\Controller;
 
+use App\Entity\Booking;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Enum\RushType;
 use App\Service\BookingService;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -61,5 +64,32 @@ class BookingController extends AbstractController
         } else {
             throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation impossible");
         }
+    }
+
+    //Update Booking
+    #[Route('/api/booking/{id}', name: 'updateBooking', methods: ['PUT'])]
+    public function updateBooking(Request $request, SerializerInterface $serializer, Booking $currentBooking, EntityManagerInterface $entityManagerInterface): JsonResponse
+    {
+        $updatedBooking = $serializer->deserialize(
+            $request->getContent(),
+            Booking::class,
+            'json',
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentBooking]
+        );
+
+        $entityManagerInterface->persist($updatedBooking);
+        $entityManagerInterface->flush();
+
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    //Delete Booking
+    #[Route('/api/booking/{id}', name: 'deletebooking', methods: ['DELETE'])]
+    public function deleteBooking(Booking $booking, EntityManager $entityManager): JsonResponse
+    {
+        $entityManager->remove($booking);
+        $entityManager->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }
