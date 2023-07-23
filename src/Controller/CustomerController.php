@@ -43,7 +43,7 @@ class CustomerController extends AbstractController
     #[Route('/api/Customers/{id}', name: 'readCustomer', methods: ['GET'])]
     public function readCustomer(Customer $customer, SerializerInterface $serializer): JsonResponse
     {
-        $jsonCustomer = $serializer->serialize($customer, 'json');
+        $jsonCustomer = $serializer->serialize($customer, 'json',['groups' => 'getCustomer']);
         return new JsonResponse($jsonCustomer, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 

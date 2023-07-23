@@ -27,7 +27,7 @@ class BookingController extends AbstractController
 
         $remainingPlaces = ['Lunch' => $remainingPlacesLunch, 'Dinner' => $remainingPlacesDinner];
 
-        $jsonRemainingPlaces = $serializer->serialize($remainingPlaces, 'json');
+        $jsonRemainingPlaces = $serializer->serialize($remainingPlaces, 'json', ['groups' => 'getBooking']);
 
         return new JsonResponse($jsonRemainingPlaces, Response::HTTP_OK, [], true);
     }

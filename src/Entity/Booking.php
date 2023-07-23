@@ -6,6 +6,7 @@ use App\Repository\BookingRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: BookingRepository::class)]
 class Booking
@@ -13,12 +14,16 @@ class Booking
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getCustomer"])]
+    #[Groups(["getBooking"])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\DateTime]
     #[Assert\NotBlank]
     #[Assert\GreaterThanOrEqual('today')]
+    #[Groups(["getCustomer"])]
+    #[Groups(["getBooking"])]
     private ?\DateTimeImmutable $date = null;
 
     #[ORM\ManyToOne(inversedBy: 'Booking')]
@@ -27,6 +32,8 @@ class Booking
 
     #[ORM\Column]
     #[Assert\GreaterThanOrEqual(1)]
+    #[Groups(["getCustomer"])]
+    #[Groups(["getBooking"])]
     private ?int $nbGuests = null;
 
     public function getId(): ?int
