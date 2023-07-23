@@ -59,7 +59,7 @@ class BookingController extends AbstractController
             
             return new JsonResponse($jsonBooking, Response::HTTP_CREATED, ['Location' => $location], true);
         } else {
-            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "La requête est invalide");
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation impossible");
         }
     }
 }
