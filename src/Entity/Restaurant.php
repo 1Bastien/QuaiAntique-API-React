@@ -30,6 +30,10 @@ class Restaurant
     #[ORM\Column]
     private array $openingTimes = [];
 
+    #[ORM\Column]
+    #[Assert\NotBlank]
+    private ?bool $activated = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -79,6 +83,18 @@ class Restaurant
     public function setOpeningTimes(array $openingTimes): static
     {
         $this->openingTimes = $openingTimes;
+
+        return $this;
+    }
+
+    public function isActivated(): ?bool
+    {
+        return $this->activated;
+    }
+
+    public function setActivated(bool $activated): static
+    {
+        $this->activated = $activated;
 
         return $this;
     }
