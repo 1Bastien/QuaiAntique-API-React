@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class CustomerController extends AbstractController
 {
     // Create Customer
-    #[Route('/api/Customers', name: 'createCustomer', methods: ['POST'])]
+    #[Route('/api/Customer', name: 'createCustomer', methods: ['POST'])]
     public function createCustomer(Request $request, EntityManagerInterface $entityManagerInterface, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, ValidatorInterface $validator): JsonResponse
     {
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
@@ -40,7 +40,7 @@ class CustomerController extends AbstractController
     }
 
     // Read Customer
-    #[Route('/api/Customers/{id}', name: 'readCustomer', methods: ['GET'])]
+    #[Route('/api/customer/{id}', name: 'readCustomer', methods: ['GET'])]
     public function readCustomer(Customer $customer, SerializerInterface $serializer): JsonResponse
     {
         $jsonCustomer = $serializer->serialize($customer, 'json',['groups' => 'getCustomer']);
@@ -48,7 +48,7 @@ class CustomerController extends AbstractController
     }
 
     //Update Customer
-    #[Route('/api/Customers/{id}', name: 'updateCustomer', methods: ['PUT'])]
+    #[Route('/api/customer/{id}', name: 'updateCustomer', methods: ['PUT'])]
     public function updateCustomer(Request $request, SerializerInterface $serializer, Customer $currentCustomer, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $updatedCustomer = $serializer->deserialize(
@@ -65,7 +65,7 @@ class CustomerController extends AbstractController
     }
 
     //Delete Customer
-    #[Route('/api/Customers/{id}', name: 'deleteCustomer', methods: ['DELETE'])]
+    #[Route('/api/customer/{id}', name: 'deleteCustomer', methods: ['DELETE'])]
     public function deleteCustomer(Customer $customer, EntityManager $entityManager): JsonResponse
     {
         $entityManager->remove($customer);
