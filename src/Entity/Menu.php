@@ -16,16 +16,17 @@ class Menu
     private ?int $id = null;
 
     #[ORM\Column(length: 30)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank('Le nom du menu est obligatoire')]
+    #[Assert\Length(min: 1, max: 30, minMessage: "Le nom doit faire au moins {{ limit }} caractères", maxMessage: "Le nom ne peut pas faire plus de {{ limit }} caractères")]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank('La description est obligatoire')]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Assert\NotNull]
-    #[Assert\PositiveOrZero]
+    #[Assert\NotNull('Le prix est obligatoire')]
+    #[Assert\PositiveOrZero('Le prix ne peut être inférieur à zéro')]
     private ?float $price = null;
 
     #[ORM\Column]

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\BookingRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -14,14 +15,19 @@ class Booking
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\DateTime]
     #[Assert\NotBlank]
+    #[Assert\GreaterThanOrEqual('today')]
     private ?\DateTimeImmutable $date = null;
 
     #[ORM\ManyToOne(inversedBy: 'Booking')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Customer $customer = null;
+
+    #[ORM\Column]
+    #[Assert\GreaterThanOrEqual(1)]
+    private ?int $nbGuests = null;
 
     public function getId(): ?int
     {
@@ -48,6 +54,18 @@ class Booking
     public function setCustomer(?Customer $customer): static
     {
         $this->customer = $customer;
+
+        return $this;
+    }
+
+    public function getNbGuests(): ?int
+    {
+        return $this->nbGuests;
+    }
+
+    public function setNbGuests(int $nbGuests): static
+    {
+        $this->nbGuests = $nbGuests;
 
         return $this;
     }

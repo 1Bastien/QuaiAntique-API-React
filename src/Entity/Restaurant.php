@@ -15,16 +15,18 @@ class Restaurant
     private ?int $id = null;
 
     #[ORM\Column(length: 30)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank('Le nom du restaurant est obligatoire')]
+    #[Assert\Length(min: 1, max: 30, minMessage: "Le nom doit faire au moins {{ limit }} caractères", maxMessage: "Le nom ne peut pas faire plus de {{ limit }} caractères")]
     private ?string $name = null;
 
     #[ORM\Column]
-    #[Assert\NotNull]
+    #[Assert\NotNull('La capacité du restaurant est obligatoire')]
     #[Assert\GreaterThanOrEqual(1)]
     private ?int $seatingCapacity = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank("L'adresse du restaurant est obligatoire")]
+    #[Assert\Length(min: 1, max: 255, minMessage: "Le nom doit faire au moins {{ limit }} caractères", maxMessage: "Le nom ne peut pas faire plus de {{ limit }} caractères")]
     private ?string $address = null;
 
     #[ORM\Column]
