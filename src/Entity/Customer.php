@@ -29,9 +29,8 @@ class Customer implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column]
-    #[Assert\NotBlank]
     #[Groups(["getCustomer"])]
-    private array $roles = ['ROLE_VISITOR'];
+    private array $roles = [];
 
     /**
      * @var string The hashed password
@@ -101,6 +100,11 @@ class Customer implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
+    }
+
+    public function getUsername(): string
+    {
+        return (string) $this->getUserIdentifier();
     }
 
     /**
