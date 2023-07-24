@@ -12,16 +12,18 @@ use App\Entity\Customer;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CustomerController extends AbstractController
 {
     // Create Customer
-    #[Route('/api/Customer', name: 'createCustomer', methods: ['POST'])]
-    public function createCustomer(Request $request, EntityManagerInterface $entityManagerInterface, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, ValidatorInterface $validator): JsonResponse
+    #[Route('/api/customer', name: 'createCustomer', methods: ['POST'])]
+    public function createCustomer(Request $request, EntityManagerInterface $entityManagerInterface, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, ValidatorInterface $validator, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
     {
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
+        $customer->setPassword($userPasswordHasher->hashPassword($customer, $customer->getPassword()));
         
         $errors = $validator->validate($customer);
 
