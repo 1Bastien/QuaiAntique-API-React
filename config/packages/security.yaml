@@ -33,8 +33,10 @@ security:
         
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/customer, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/booking, methods: ['PUT', 'DELETE'], roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
