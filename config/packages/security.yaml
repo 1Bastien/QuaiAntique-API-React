@@ -22,7 +22,7 @@ security:
             pattern: ^/api/login
             stateless: true
             json_login:
-                check_path: /api/login_check
+                check_path: /api/login
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
@@ -33,7 +33,7 @@ security:
         
 
     access_control:
-        - { path: ^/api/customer, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/customer, methods: ['GET', 'PUT', 'DELETE'], roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/booking, methods: ['PUT', 'DELETE'], roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin, roles: ROLE_ADMIN }
         
