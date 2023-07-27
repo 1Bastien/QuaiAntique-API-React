@@ -7,9 +7,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Enum\RushType;
+use App\Repository\BookingRepository;
+use App\Repository\CustomerRepository;
 use App\Service\BookingService;
-use Doctrine\ORM\EntityManager;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -20,15 +23,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BookingController extends AbstractController
 {
+    // Scearch Avaibilities
     #[Route('/api/booking/{date}', name: 'readReminigPlacesToday', methods: ['GET'])]
-    public function getReminingPlacesToday(string $date, BookingService $bookingService, SerializerInterface $serializer): JsonResponse
+    public function getReminingPlaces(string $date, BookingService $bookingService, SerializerInterface $serializer): JsonResponse
     {
-        $dateTime = new \DateTimeImmutable($date);
+        $dateTime = new DateTimeImmutable($date);
 
         $remainingPlacesLunch = $bookingService->getRemainingPlaces(RushType::LUNCH, $dateTime);
         $remainingPlacesDinner = $bookingService->getRemainingPlaces(RushType::DINNER, $dateTime);
 
-        $remainingPlaces = ['Lunch' => $remainingPlacesLunch, 'Dinner' => $remainingPlacesDinner];
+        $remainingPlaces = ['lunch' => $remainingPlacesLunch, 'dinner' => $remainingPlacesDinner];
 
         $jsonRemainingPlaces = $serializer->serialize($remainingPlaces, 'json', ['groups' => 'getBooking']);
 
@@ -37,9 +41,24 @@ class BookingController extends AbstractController
 
     // Create Booking
     #[Route('/api/booking', name: 'createBooking', methods: ['POST'])]
-    public function createBooking(Request $request, EntityManagerInterface $entityManagerInterface, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, BookingService $bookingService, ValidatorInterface $validator): JsonResponse
+    public function createBooking(Request $request, EntityManagerInterface $entityManagerInterface, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, BookingService $bookingService, ValidatorInterface $validator, CustomerRepository $customerRepository): JsonResponse
     {
-        $booking = $serializer->deserialize($request->getContent(), Booking::class, 'json');
+        $jsonDecode = json_decode($request->getContent());
+
+        $dateTimeImmutable = new DateTimeImmutable($jsonDecode->date);
+        $customer = $customerRepository->findOneBy(['email' => $jsonDecode->customer]);
+        
+        $booking = new Booking;
+        $booking
+        ->setDate($dateTimeImmutable)
+        ->setCustomer($customer)
+        ->setNbGuests($jsonDecode->nbGuests)
+        ->setNameOfBooking($jsonDecode->nameOfBooking)
+        ->setEmail($jsonDecode->email);
+        
+        if ($customer !== null ) {
+            $booking->setEmail($customer->getEmail());
+        }
 
         $errors = $validator->validate($booking);
 
@@ -47,29 +66,34 @@ class BookingController extends AbstractController
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
 
-        $dateTime = $booking->getDate();
-        $nbGuests = $booking->getNbGuests();
-        $remainingPlaces = $bookingService->getRemainingPlaces(RushType::fromDateTime($dateTime), $dateTime);
+        $remainingPlaces = $bookingService->getRemainingPlaces(RushType::fromDateTime($dateTimeImmutable), $dateTimeImmutable);
 
-        if (!$bookingService->isBookingPossible($nbGuests, $remainingPlaces)) {
+        if ($bookingService->isBookingPossible($jsonDecode->nbGuests, $remainingPlaces)) {
 
             $entityManagerInterface->persist($booking);
             $entityManagerInterface->flush();
 
-            $jsonBooking = $serializer->serialize($booking, 'json', []);
-
-            $location = $urlGenerator->generate('readBooking', ['id' => $booking->getId()], UrlGeneratorInterface::ABSOLUTE_PATH);
+            $jsonBooking = $serializer->serialize($booking, 'json', ['groups' => 'getBooking']);
             
-            return new JsonResponse($jsonBooking, Response::HTTP_CREATED, ['Location' => $location], true);
-        } else {
-            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation impossible");
+            return new JsonResponse($jsonBooking, Response::HTTP_CREATED, [], true);
         }
+
+        throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation impossible");
     }
 
     //Update Booking
     #[Route('/api/booking/{id}', name: 'updateBooking', methods: ['PUT'])]
-    public function updateBooking(Request $request, SerializerInterface $serializer, Booking $currentBooking, EntityManagerInterface $entityManagerInterface): JsonResponse
+    public function updateBooking(Request $request, SerializerInterface $serializer, Booking $currentBooking, EntityManagerInterface $entityManagerInterface, JWTEncoderInterface $jwt, CustomerRepository $customerRepository, BookingRepository $bookingRepository, String $id): JsonResponse
     {
+        $tokenJwt = $jwt->decode(substr($request->headers->get('Authorization'), 7));
+
+        $currentCustomer = $customerRepository->findOneByEmail($tokenJwt['username']);
+        $booking = $bookingRepository->findOneBy(['customer' => $currentCustomer, 'id' => $id]);
+
+        if (!$booking) {
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation introuvable");
+        }
+        
         $updatedBooking = $serializer->deserialize(
             $request->getContent(),
             Booking::class,
@@ -85,8 +109,17 @@ class BookingController extends AbstractController
 
     //Delete Booking
     #[Route('/api/booking/{id}', name: 'deletebooking', methods: ['DELETE'])]
-    public function deleteBooking(Booking $booking, EntityManager $entityManager): JsonResponse
+    public function deleteBooking(Booking $booking, EntityManagerInterface $entityManager, Request $request, JWTEncoderInterface $jwt, CustomerRepository $customerRepository, BookingRepository $bookingRepository, string $id): JsonResponse
     {
+        $tokenJwt = $jwt->decode(substr($request->headers->get('Authorization'), 7));
+
+        $currentCustomer = $customerRepository->findOneByEmail($tokenJwt['username']);
+        $booking = $bookingRepository->findOneBy(['customer' => $currentCustomer, 'id' => $id]);
+
+        if (!$booking) {
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Réservation introuvable");
+        }
+        
         $entityManager->remove($booking);
         $entityManager->flush();
 
