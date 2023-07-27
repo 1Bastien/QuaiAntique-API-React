@@ -9,12 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Entity\Customer;
+use App\Repository\CustomerRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CustomerController extends AbstractController
 {
@@ -34,7 +37,7 @@ class CustomerController extends AbstractController
         $entityManagerInterface->persist($customer);
         $entityManagerInterface->flush();
 
-        $jsonCustomer = $serializer->serialize($customer, 'json', []);
+        $jsonCustomer = $serializer->serialize($customer, 'json', ['groups' => 'getCustomer']);
 
         $location = $urlGenerator->generate('readCustomer', ['id' => $customer->getId()], UrlGeneratorInterface::ABSOLUTE_PATH);
 
@@ -43,16 +46,33 @@ class CustomerController extends AbstractController
 
     // Read Customer
     #[Route('/api/customer/{id}', name: 'readCustomer', methods: ['GET'])]
-    public function readCustomer(Customer $customer, SerializerInterface $serializer): JsonResponse
+    public function readCustomer(Customer $customer, SerializerInterface $serializer, Request $request, JWTEncoderInterface $jwt, CustomerRepository $customerRepository, int $id): JsonResponse
     {
+        $tokenJwt = $jwt->decode(substr($request->headers->get('Authorization'), 7));
+        $email = $tokenJwt['username'];
+        $idCurrentCustomer = $customerRepository->findOneByEmail($email)->getId();
+
+        if ($id !== $idCurrentCustomer) {
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Accès aux données refusé");
+        }
+
         $jsonCustomer = $serializer->serialize($customer, 'json',['groups' => 'getCustomer']);
+
         return new JsonResponse($jsonCustomer, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
     //Update Customer
     #[Route('/api/customer/{id}', name: 'updateCustomer', methods: ['PUT'])]
-    public function updateCustomer(Request $request, SerializerInterface $serializer, Customer $currentCustomer, EntityManagerInterface $entityManagerInterface): JsonResponse
+    public function updateCustomer(Request $request, SerializerInterface $serializer, Customer $currentCustomer, EntityManagerInterface $entityManagerInterface, JWTEncoderInterface $jwt, CustomerRepository $customerRepository, int $id): JsonResponse
     {
+        $tokenJwt = $jwt->decode(substr($request->headers->get('Authorization'), 7));
+        $email = $tokenJwt['username'];
+        $idCurrentCustomer = $customerRepository->findOneByEmail($email)->getId();
+
+        if ($id !== $idCurrentCustomer) {
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Accès aux données refusé");
+        }
+        
         $updatedCustomer = $serializer->deserialize(
             $request->getContent(),
             Customer::class,
@@ -68,8 +88,16 @@ class CustomerController extends AbstractController
 
     //Delete Customer
     #[Route('/api/customer/{id}', name: 'deleteCustomer', methods: ['DELETE'])]
-    public function deleteCustomer(Customer $customer, EntityManager $entityManager): JsonResponse
+    public function deleteCustomer(Customer $customer, EntityManager $entityManager, JWTEncoderInterface $jwt, CustomerRepository $customerRepository, int $id, Request $request): JsonResponse
     {
+        $tokenJwt = $jwt->decode(substr($request->headers->get('Authorization'), 7));
+        $email = $tokenJwt['username'];
+        $idCustomer = $customerRepository->findOneByEmail($email)->getId();
+
+        if ($id !== $idCustomer) {
+            throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "Accès aux données refusé");
+        }
+        
         $entityManager->remove($customer);
         $entityManager->flush();
 
