@@ -14,27 +14,33 @@ class Booking
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getCustomer"])]
-    #[Groups(["getBooking"])]
+    #[Groups(['getCustomer', 'getBooking'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Assert\DateTime]
     #[Assert\NotBlank]
     #[Assert\GreaterThanOrEqual('today')]
-    #[Groups(["getCustomer"])]
-    #[Groups(["getBooking"])]
-    private ?\DateTimeImmutable $date = null;
+    #[Groups(['getCustomer', 'getBooking'])]
+    private ?\DateTimeInterface $date = null;
 
     #[ORM\ManyToOne(inversedBy: 'Booking')]
-    #[ORM\JoinColumn(nullable: false)]
     private ?Customer $customer = null;
 
     #[ORM\Column]
     #[Assert\GreaterThanOrEqual(1)]
-    #[Groups(["getCustomer"])]
-    #[Groups(["getBooking"])]
+    #[Groups(['getCustomer', 'getBooking'])]
     private ?int $nbGuests = null;
+
+    #[ORM\Column(length: 180)]
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    #[Groups(['getCustomer', 'getBooking'])]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 30)]
+    #[Assert\NotBlank]
+    #[Groups(['getCustomer', 'getBooking'])]
+    private ?string $nameOfBooking = null;
 
     public function getId(): ?int
     {
@@ -73,6 +79,30 @@ class Booking
     public function setNbGuests(int $nbGuests): static
     {
         $this->nbGuests = $nbGuests;
+
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    public function getNameOfBooking(): ?string
+    {
+        return $this->nameOfBooking;
+    }
+
+    public function setNameOfBooking(string $nameOfBooking): static
+    {
+        $this->nameOfBooking = $nameOfBooking;
 
         return $this;
     }
