@@ -11,8 +11,8 @@ use App\Repository\MenuRepository;
 
 class MenuController extends AbstractController
 {
-    // Read MenusAvailable
-    #[Route('/api/menusAvailable', name: 'readMenusAvailable', methods: ['GET'])]
+    // Read Menus
+    #[Route('/api/menus', name: 'readMenusAvailable', methods: ['GET'])]
     public function readMenusAvailable(MenuRepository $menuRepository, SerializerInterface $serializer): JsonResponse
     {
         $menusList = $menuRepository->findBy(['available' => true]);
