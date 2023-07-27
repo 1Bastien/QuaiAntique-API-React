@@ -12,12 +12,12 @@ use App\Repository\RestaurantRepository;
 class RestaurantController extends AbstractController
 {
     // Read Restaurant
-    #[Route('/api/Restaurant', name: 'readRestaurant', methods: ['GET'])]
-    public function readRestaurant(RestaurantRepository $RestaurantRepository, SerializerInterface $serializer): JsonResponse
+    #[Route('/api/restaurant', name: 'readRestaurant', methods: ['GET'])]
+    public function readRestaurant(RestaurantRepository $restaurantRepository, SerializerInterface $serializer): JsonResponse
     {
-        $Restaurant = $RestaurantRepository->findOneBy(['activated' => true]);
+        $restaurant = $restaurantRepository->findOneBy(['activated' => true]);
 
-        $jsonRestaurant = $serializer->serialize($Restaurant, 'json');
+        $jsonRestaurant = $serializer->serialize($restaurant, 'json');
         return new JsonResponse($jsonRestaurant, Response::HTTP_OK, [], true);
     }
 }
