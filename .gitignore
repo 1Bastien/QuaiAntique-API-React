@@ -10,7 +10,9 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-
+.DS_Store
+/.DS_Store
+/config/.DS_Store
 
 .history
 ###> lexik/jwt-authentication-bundle ###
